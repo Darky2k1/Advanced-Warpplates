@@ -1,0 +1,3 @@
+C:\Users\DarkunderdoG\Desktop\tshock\twitchy0905 - Copy\TShockPluginTemplate\obj\x86\Debug\ResolveAssemblyReference.cache
+C:\Users\DarkunderdoG\Desktop\tshock\twitchy0905 - Copy\TShockPluginTemplate\obj\x86\Debug\Jail.dll
+C:\Users\DarkunderdoG\Desktop\tshock\twitchy0905 - Copy\TShockPluginTemplate\obj\x86\Debug\Jail.pdb
