@@ -8,8 +8,8 @@
     <ProjectGuid>{85F20ADC-C2D1-416D-B7FF-9433C75A8F01}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Jail</RootNamespace>
-    <AssemblyName>Jail</AssemblyName>
+    <RootNamespace>AdvancedWarpplate</RootNamespace>
+    <AssemblyName>AdvancedWarpplate</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <TargetFrameworkProfile>
     </TargetFrameworkProfile>

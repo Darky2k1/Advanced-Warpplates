@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Reflection;
 using Terraria;
 using Hooks;
+using MySql.Data.MySqlClient;
+using TShockAPI.DB;
 using TShockAPI;
 using System.ComponentModel;
 using System.Linq;
@@ -111,9 +113,9 @@ namespace PluginTemplate
                         if (player.TSPlayer.Group.HasPermission("warpplate") && player.warpplateuse)
                         {
                             string region = Warpplates.InAreaWarpplateName(player.TSPlayer.TileX, player.TSPlayer.TileY);
-                            if (region == null)
-                                player.warpplatetime = 0;
-                            if (region != null)
+                            if (region == null || region == "" )
+                                player.warpplatetime = 0;  
+                            else
                             {
                                 var warpplateinfo = Warpplates.FindWarpplate(region);
                                 var warp = Warpplates.FindWarpplate(warpplateinfo.WarpDest);
