@@ -75,7 +75,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Class2.cs" />
+    <Compile Include="warpplatedb.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="warpplate.cs" />
   </ItemGroup>
