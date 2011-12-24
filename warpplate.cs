@@ -4,9 +4,6 @@ using System.Reflection;
 using Terraria;
 using Hooks;
 using TShockAPI;
-using Community.CsharpSqlite.SQLiteClient;
-using MySql.Data.MySqlClient;
-using TShockAPI.DB;
 using System.ComponentModel;
 using System.Linq;
 using System.Web;
@@ -16,10 +13,7 @@ namespace PluginTemplate
     [APIVersion(1, 10)]
     public class WarpplatePlugin : TerrariaPlugin
     {
-        public static SqlTableEditor SQLEditor;
-        public static SqlTableCreator SQLWriter;
-        public static List<Player> WPlayers = new List<Player>();
-        public List<Warpplate> Warpplates = new List<Warpplate>();
+        public static List<Player> Players = new List<Player>();
         public static WarpplateManager Warpplates;
 
         public override string Name
@@ -63,29 +57,9 @@ namespace PluginTemplate
             base.Dispose(disposing);
         }
 
-        private IDbConnection database;
-
-        public WarpplateManager(IDbConnection db)
-        {
-            database = db;
-
-            var table = new SqlTable("Warpplates",
-                new SqlColumn("X1", MySqlDbType.Int32),
-                new SqlColumn("Y1", MySqlDbType.Int32),
-                new SqlColumn("width", MySqlDbType.Int32),
-                new SqlColumn("height", MySqlDbType.Int32),
-                new SqlColumn("WarpplateName", MySqlDbType.VarChar, 50) { Primary = true },
-                new SqlColumn("WorldID", MySqlDbType.Text),
-                new SqlColumn("WarpplateDestination", MySqlDbType.VarChar, 50)
-            );
-            var creator = new SqlTableCreator(db, db.GetSqlType() == SqlType.Sqlite ? (IQueryBuilder)new SqliteQueryCreator() : new MysqlQueryCreator());
-            creator.EnsureExists(table);
-            ReloadAllWarpplates();
-        }
-
         private void OnPostInit()
         {
-            ReloadAllWarpplates();
+            Warpplates.ReloadAllWarpplates();
         }
 
         public WarpplatePlugin(Main game)
@@ -134,30 +108,27 @@ namespace PluginTemplate
                 lock (Players)
                     foreach (Player player in Players)
                     {
-                        if (player.TSPlayer.Group.HasPermission("warpplate"))
+                        if (player.TSPlayer.Group.HasPermission("warpplate") && player.warpplateuse)
                         {
                             string region = Warpplates.InAreaWarpplateName(player.TSPlayer.TileX, player.TSPlayer.TileY);
                             if (region == null)
                                 player.warpplatetime = 0;
-                            if (region != null || region != "")
+                            if (region != null)
                             {
-                                if (Warpplates.FindWarpplate(region) != null || Warpplates.FindWarpplate(Warpplates.FindWarpplate(region).WarpDest) != null || Warpplates.FindWarpplate(region).ToString() != "" || Warpplates.FindWarpplate(Warpplates.FindWarpplate(region).WarpDest).ToString() != "")
+                                var warpplateinfo = Warpplates.FindWarpplate(region);
+                                var warp = Warpplates.FindWarpplate(warpplateinfo.WarpDest);
+                                if (warp.WarpplatePos != Vector2.Zero)
                                 {
-                                    var warpplateinfo = Warpplates.FindWarpplate(region);
-                                    var warp = Warpplates.FindWarpplate(warpplateinfo.WarpDest);
-                                    if (warp.WarpplatePos != Vector2.Zero)
+                                    player.warpplatetime++;
+                                    if ((4 - player.warpplatetime) > 0)
+                                        player.TSPlayer.SendMessage("You Will Be Warped To " + warpplateinfo.WarpDest + " in " + (4 - player.warpplatetime) + " Seconds");
+                                    if (player.warpplatetime == 4)
                                     {
-                                        player.warpplatetime++;
-                                        if ((4 - player.warpplatetime) > 0)
-                                            player.TSPlayer.SendMessage("You Will Be Warped To " + warpplateinfo.WarpDest + " in " + (4 - player.warpplatetime) + " Seconds");
-                                        if (player.warpplatetime == 4)
-                                        {
-                                            if (player.TSPlayer.Teleport((int)warp.WarpplatePos.X + 2, (int)warp.WarpplatePos.Y + 3))
-                                                player.SendMessage("You Have Been Warped To " + warpplateinfo.WarpDest + " via a Warpplate");
-                                            player.warpplatetime = 0;
-                                        }
-
+                                        if (player.TSPlayer.Teleport((int)warp.WarpplatePos.X + 2, (int)warp.WarpplatePos.Y + 3))
+                                            player.TSPlayer.SendMessage("You Have Been Warped To " + warpplateinfo.WarpDest + " via a Warpplate");
+                                        player.warpplatetime = 0;
                                     }
+
                                 }
                             }
                         }
@@ -287,7 +258,7 @@ namespace PluginTemplate
         private static void reloadall(CommandArgs args)
         {
             Warpplates.ReloadAllWarpplates();
-            FileTShock.Utils.SetupConfig();
+            FileTools.SetupConfig();
             TShock.Regions.ReloadAllRegions();
             TShock.Groups.LoadPermisions();
         }
