@@ -78,6 +78,7 @@ namespace PluginTemplate
             Commands.ChatCommands.Add(new Command("setwarpplate", removeplatedest, "rwpd"));
             Commands.ChatCommands.Add(new Command("setwarpplate", wpi, "wpi"));
             Commands.ChatCommands.Add(new Command("setwarpplate", warpallow, "wpallow"));
+            Commands.ChatCommands.Add(new Command("setwarpplate", reloadwarp, "reloadwarp"));
         }
 
         public void OnGreetPlayer(int ply, HandledEventArgs e)
@@ -260,12 +261,9 @@ namespace PluginTemplate
             args.Player.SendMessage("Warpplate X: " + warpplateinfo.WarpplatePos.X + " Warpplate Y: " + warpplateinfo.WarpplatePos.Y, Color.HotPink);
         }
 
-        private static void reloadall(CommandArgs args)
+        private static void reloadwarp(CommandArgs args)
         {
             Warpplates.ReloadAllWarpplates();
-            FileTools.SetupConfig();
-            TShock.Regions.ReloadAllRegions();
-            TShock.Groups.LoadPermisions();
         }
 
         private static void warpallow(CommandArgs args)
