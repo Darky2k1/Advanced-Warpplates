@@ -125,52 +125,6 @@ namespace PluginTemplate
             }
         }
 
-        public void ReloadForUnitTest(String n)
-        {
-
-            using (var reader = database.QueryReader("SELECT * FROM Warpplates WHERE WorldID=@0", n))
-            {
-                Warpplates.Clear();
-                while (reader.Read())
-                {
-                    int X1 = reader.Get<int>("X1");
-                    int Y1 = reader.Get<int>("Y1");
-                    int height = reader.Get<int>("height");
-                    int width = reader.Get<int>("width");
-                    int Protected = reader.Get<int>("Protected");
-                    string MergedIDs = reader.Get<string>("UserIds");
-                    string name = reader.Get<string>("WarpplateName");
-                    string warpdest = reader.Get<string>("WarpplateDestination");
-                    string[] SplitIDs = MergedIDs.Split(',');
-
-                    Warpplate r = new Warpplate(new Vector2(X1, Y1), new Rectangle(X1, Y1, width, height), name, warpdest, Protected != 0, Main.worldID.ToString());
-                    try
-                    {
-                        for (int i = 0; i < SplitIDs.Length; i++)
-                        {
-                            int id;
-
-                            if (Int32.TryParse(SplitIDs[i], out id)) // if unparsable, it's not an int, so silently skip
-                                r.AllowedIDs.Add(id);
-                            else if (SplitIDs[i] == "") // Split gotcha, can return an empty string with certain conditions
-                                // but we only want to let the user know if it's really a nonparsable integer.
-                                Log.Warn("UnitTest: One of your UserIDs is not a usable integer: " + SplitIDs[i]);
-                        }
-                    }
-                    catch (Exception e)
-                    {
-                        Log.Error("Your database contains invalid UserIDs (they should be ints).");
-                        Log.Error("A lot of things will fail because of this. You must manually delete and re-create the allowed field.");
-                        Log.Error(e.Message);
-                        Log.Error(e.StackTrace);
-                    }
-
-                    Warpplates.Add(r);
-                }
-            }
-
-        }
-
         public bool AddWarpplate(int tx, int ty, int width, int height, string Warpplatename, string Warpdest, string worldid)
         {
             if (GetWarpplateByName(Warpplatename) != null)
@@ -197,6 +151,7 @@ namespace PluginTemplate
             if (r != null)
             {
                 int q = database.Query("DELETE FROM Warpplates WHERE WarpplateName=@0 AND WorldID=@1", name, Main.worldID.ToString());
+                Warpplates.Remove(r);
                 if (q > 0)
                     return true;
             }
@@ -205,71 +160,32 @@ namespace PluginTemplate
 
         public bool SetWarpplateState(string name, bool state)
         {
-            try
+            var Warpplate = GetWarpplateByName(name);
+            if (Warpplate != null)
             {
-                database.Query("UPDATE Warpplates SET Protected=@0 WHERE WarpplateName=@1 AND WorldID=@2", state ? 1 : 0, name, Main.worldID.ToString());
-                var Warpplate = GetWarpplateByName(name);
-                if (Warpplate != null)
-                    Warpplate.DisableBuild = state;
-                return true;
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex.ToString());
-                return false;
-            }
-        }
-
-        public bool SetWarpplateStateTest(string name, string world, bool state)
-        {
-            try
-            {
-                database.Query("UPDATE Warpplates SET Protected=@0 WHERE WarpplateName=@1 AND WorldID=@2", state ? 1 : 0, name, world);
-                var Warpplate = GetWarpplateByName(name);
-                if (Warpplate != null)
-                    Warpplate.DisableBuild = state;
-                return true;
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex.ToString());
-                return false;
-            }
-        }
-
-        public bool CanBuild(int x, int y, TSPlayer ply)
-        {
-            if (!ply.Group.HasPermission(Permissions.canbuild))
-            {
-                return false;
-            }
-            for (int i = 0; i < Warpplates.Count; i++)
-            {
-                if (Warpplates[i].InArea(new Rectangle(x, y, 0, 0)) && !Warpplates[i].HasPermissionToBuildInWarpplate(ply))
+                try
                 {
-                    return false;
+                    Warpplate.DisableBuild = state;
+                    database.Query("UPDATE Warpplates SET Protected=@0 WHERE WarpplateName=@1 AND WorldID=@2", state ? 1 : 0, name, Main.worldID.ToString());
+
+                    return true;
+                }
+                catch (Exception ex)
+                {
+                    Log.Error(ex.ToString());
                 }
             }
-            return true;
+            return false;
         }
 
         public Warpplate FindWarpplate(string name)
         {
             try
             {
-                using (var reader = database.QueryReader("SELECT * FROM Warpplates WHERE WarpplateName=@0 AND WorldID=@1", name, Main.worldID.ToString()))
+                foreach (Warpplate wp in Warpplates)
                 {
-                    if (reader.Read())
-                    {
-                        try
-                        {
-                            return new Warpplate(new Vector2(reader.Get<int>("X1"), reader.Get<int>("Y1")), new Rectangle(reader.Get<int>("X1"), reader.Get<int>("Y1"), reader.Get<int>("width"), reader.Get<int>("height")), reader.Get<string>("WarpplateName"), reader.Get<string>("WarpplateDestination"), reader.Get<bool>("Protected"), reader.Get<string>("WorldID"));
-                        }
-                        catch
-                        {
-                            return new Warpplate(new Vector2(reader.Get<int>("X1"), reader.Get<int>("Y1")), new Rectangle(reader.Get<int>("X1"), reader.Get<int>("Y1"), reader.Get<int>("width"), reader.Get<int>("height")), reader.Get<string>("WarpplateName"), " ", reader.Get<bool>("Protected"), reader.Get<string>("WorldID"));
-                        }
-                    }
+                    if (wp.Name == name)
+                        return wp;
                 }
             }
             catch (Exception ex)
@@ -312,27 +228,13 @@ namespace PluginTemplate
             return MergedIDs.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).ToList();
         }
 
-        public bool RemoveUser(string WarpplateName, string userName)
-        {
-            Warpplate r = GetWarpplateByName(WarpplateName);
-            if (r != null)
-            {
-                r.RemoveID(TShock.Users.GetUserID(userName));
-                string ids = string.Join(",", r.AllowedIDs);
-                int q = database.Query("UPDATE Warpplates SET UserIds=@0 WHERE WarpplateName=@1 AND WorldID=@2", ids,
-                                       WarpplateName, Main.worldID.ToString());
-                if (q > 0)
-                    return true;
-            }
-            return false;
-        }
-
         public bool removedestination(string WarpplateName)
         {
             Warpplate r = GetWarpplateByName(WarpplateName);
             if (r != null)
             {
                 int q = database.Query("UPDATE Warpplates SET WarpplateDestination=@0 WHERE WarpplateName=@1 AND WorldID=@2", "", WarpplateName, Main.worldID.ToString());
+                r.WarpDest = "";
                 if (q > 0)
                     return true;
             }
@@ -345,6 +247,7 @@ namespace PluginTemplate
             if (r != null)
             {
                 int q = database.Query("UPDATE Warpplates SET WarpplateDestination=@0 WHERE WarpplateName=@1 AND WorldID=@2;", WarpDestination, WarpplateName, Main.worldID.ToString());
+                r.WarpDest = WarpDestination;
                 if (q > 0)
                     return true;
             }
@@ -358,35 +261,24 @@ namespace PluginTemplate
         /// <returns>List of Warpplates with only their names</returns>
         public List<Warpplate> ListAllWarpplates(string worldid)
         {
-            var Warpplates = new List<Warpplate>();
+            var WarpplatesTemp = new List<Warpplate>();
             try
             {
-                using (var reader = database.QueryReader("SELECT WarpplateName FROM Warpplates WHERE WorldID=@0", worldid))
+                foreach (Warpplate wp in Warpplates)
                 {
-                    while (reader.Read())
-                        Warpplates.Add(new Warpplate { Name = reader.Get<string>("WarpplateName") });
+                    WarpplatesTemp.Add(new Warpplate { Name = wp.Name });
                 }
             }
             catch (Exception ex)
             {
                 Log.Error(ex.ToString());
             }
-            return Warpplates;
+            return WarpplatesTemp;
         }
 
         public Warpplate GetWarpplateByName(String name)
         {
             return Warpplates.FirstOrDefault(r => r.Name.Equals(name) && r.WorldID == Main.worldID.ToString());
-        }
-
-        public Warpplate ZacksGetWarpplateByName(String name)
-        {
-            foreach (Warpplate r in Warpplates)
-            {
-                if (r.Name.Equals(name))
-                    return r;
-            }
-            return null;
         }
     }
 
@@ -413,6 +305,7 @@ namespace PluginTemplate
 
         public Warpplate()
         {
+            WarpplatePos = Vector2.Zero;
             Area = Rectangle.Empty;
             Name = string.Empty;
             WarpDest = string.Empty;
@@ -428,60 +321,6 @@ namespace PluginTemplate
                 return true;
             }
             return false;
-        }
-
-        public bool HasPermissionToBuildInWarpplate(TSPlayer ply)
-        {
-            if (!ply.IsLoggedIn)
-            {
-                if (!ply.HasBeenNaggedAboutLoggingIn)
-                {
-                    ply.SendMessage("You must be logged in to take advantage of protected Warpplates.", Color.Red);
-                    ply.HasBeenNaggedAboutLoggingIn = true;
-                }
-                return false;
-            }
-            if (!DisableBuild)
-            {
-                return true;
-            }
-
-            for (int i = 0; i < AllowedIDs.Count; i++)
-            {
-                if (AllowedIDs[i] == ply.UserID)
-                {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        public void setAllowedIDs(String ids)
-        {
-            String[] id_arr = ids.Split(',');
-            List<int> id_list = new List<int>();
-            foreach (String id in id_arr)
-            {
-                int i = 0;
-                int.TryParse(id, out i);
-                if (i != 0)
-                    id_list.Add(i);
-            }
-            AllowedIDs = id_list;
-        }
-
-        public void RemoveID(int id)
-        {
-            var index = -1;
-            for (int i = 0; i < AllowedIDs.Count; i++)
-            {
-                if (AllowedIDs[i] == id)
-                {
-                    index = i;
-                    break;
-                }
-            }
-            AllowedIDs.RemoveAt(index);
         }
     }
 }

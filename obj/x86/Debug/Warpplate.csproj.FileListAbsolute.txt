@@ -7,7 +7,6 @@ C:\Users\DarkunderdoG\Desktop\tshock\twitchy0905 - Copy\Advanced-Warpplates\bin\
 C:\Users\DarkunderdoG\Desktop\tshock\twitchy0905 - Copy\Advanced-Warpplates\bin\Debug\MySql.Web.dll
 C:\Users\DarkunderdoG\Desktop\tshock\twitchy0905 - Copy\Advanced-Warpplates\bin\Debug\Newtonsoft.Json.dll
 C:\Users\DarkunderdoG\Desktop\tshock\twitchy0905 - Copy\Advanced-Warpplates\bin\Debug\TerrariaServer.exe
-C:\Users\DarkunderdoG\Desktop\tshock\twitchy0905 - Copy\Advanced-Warpplates\bin\Debug\TShockAPI.dll
 C:\Users\DarkunderdoG\Desktop\tshock\twitchy0905 - Copy\Advanced-Warpplates\obj\x86\Debug\ResolveAssemblyReference.cache
 C:\Users\DarkunderdoG\Desktop\tshock\twitchy0905 - Copy\Advanced-Warpplates\bin\Debug\AdvancedWarpplate.dll
 C:\Users\DarkunderdoG\Desktop\tshock\twitchy0905 - Copy\Advanced-Warpplates\bin\Debug\AdvancedWarpplate.pdb

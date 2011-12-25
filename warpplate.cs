@@ -110,27 +110,30 @@ namespace PluginTemplate
                 lock (Players)
                     foreach (Player player in Players)
                     {
-                        if (player.TSPlayer.Group.HasPermission("warpplate") && player.warpplateuse)
+                        if (player != null || player.TSPlayer != null)
                         {
-                            string region = Warpplates.InAreaWarpplateName(player.TSPlayer.TileX, player.TSPlayer.TileY);
-                            if (region == null || region == "" )
-                                player.warpplatetime = 0;  
-                            else
+                            if (player.TSPlayer.Group.HasPermission("warpplate") && player.warpplateuse)
                             {
-                                var warpplateinfo = Warpplates.FindWarpplate(region);
-                                var warp = Warpplates.FindWarpplate(warpplateinfo.WarpDest);
-                                if (warp.WarpplatePos != Vector2.Zero)
+                                string region = Warpplates.InAreaWarpplateName(player.TSPlayer.TileX, player.TSPlayer.TileY);
+                                if (region == null || region == "")
+                                    player.warpplatetime = 0;
+                                else
                                 {
-                                    player.warpplatetime++;
-                                    if ((4 - player.warpplatetime) > 0)
-                                        player.TSPlayer.SendMessage("You Will Be Warped To " + warpplateinfo.WarpDest + " in " + (4 - player.warpplatetime) + " Seconds");
-                                    if (player.warpplatetime == 4)
+                                    var warpplateinfo = Warpplates.FindWarpplate(region);
+                                    var warp = Warpplates.FindWarpplate(warpplateinfo.WarpDest);
+                                    if (warp.WarpplatePos != Vector2.Zero)
                                     {
-                                        if (player.TSPlayer.Teleport((int)warp.WarpplatePos.X + 2, (int)warp.WarpplatePos.Y + 3))
-                                            player.TSPlayer.SendMessage("You Have Been Warped To " + warpplateinfo.WarpDest + " via a Warpplate");
-                                        player.warpplatetime = 0;
-                                    }
+                                        player.warpplatetime++;
+                                        if ((4 - player.warpplatetime) > 0)
+                                            player.TSPlayer.SendMessage("You Will Be Warped To " + warpplateinfo.WarpDest + " in " + (4 - player.warpplatetime) + " Seconds");
+                                        if (player.warpplatetime == 4)
+                                        {
+                                            if (player.TSPlayer.Teleport((int)warp.WarpplatePos.X + 2, (int)warp.WarpplatePos.Y + 3))
+                                                player.TSPlayer.SendMessage("You Have Been Warped To " + warpplateinfo.WarpDest + " via a Warpplate");
+                                            player.warpplatetime = 0;
+                                        }
 
+                                    }
                                 }
                             }
                         }
