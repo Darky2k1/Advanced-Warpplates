@@ -111,7 +111,7 @@ namespace PluginTemplate
                 lock (Players)
                     foreach (Player player in Players)
                     {
-                        if (player != null || player.TSPlayer != null)
+                        if (player != null && player.TSPlayer != null)
                         {
                             if (player.TSPlayer.Group.HasPermission("warpplate") && player.warpplateuse)
                             {
